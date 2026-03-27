@@ -1,0 +1,15 @@
+version: "2"
+
+services:
+  qa-test-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    container_name: qa-test-api
+    ports:
+      - "8080:8080"
+    environment:
+      - GIN_MODE=release
+    restart: unless-stopped

@@ -1,0 +1,628 @@
+openapi: "3.0.3"
+
+info:
+  title: GoLedger Challenge - QA API
+  description: |
+    REST API for the **Library Manager** system.  
+    This API sits in front of a Hyperledger Fabric chaincode and adds a JWT-based authentication layer on top.
+
+    ## Authentication
+    Most endpoints require a **Bearer JWT token** obtained from `POST /auth/login`.  
+    Include it in the `Authorization` header:
+    ```
+    Authorization: Bearer <token>
+    ```
+
+    ### Default users
+    | Username | Password | Role  |
+    |----------|----------|-------|
+    | admin    | admin123 | admin |
+    | user1    | pass123  | user  |
+  version: "1.0.0"
+  contact: {}
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+tags:
+  - name: auth
+    description: Authentication — login, registration and profile
+  - name: books
+    description: Book asset management on the blockchain
+  - name: persons
+    description: Person asset management on the blockchain
+  - name: libraries
+    description: Library asset management on the blockchain
+
+# ── Security scheme ────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # ── Reusable schemas ─────────────────────────────────────────────────────────
+  schemas:
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "invalid credentials"
+
+    LoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: admin
+        password:
+          type: string
+          format: password
+          example: admin123
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: Signed JWT valid for 24 hours
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    RegisterRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: newuser
+        password:
+          type: string
+          format: password
+          example: mypassword
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: admin
+        role:
+          type: string
+          enum: [admin, user]
+          example: admin
+
+    BookRequest:
+      type: object
+      required: [title, author]
+      properties:
+        title:
+          type: string
+          example: "The Go Programming Language"
+        author:
+          type: string
+          example: "Alan Donovan"
+        genres:
+          type: array
+          items:
+            type: string
+          example: ["Technology", "Education"]
+        bookType:
+          type: integer
+          description: "0 = Hardcover, 1 = Paperback, 2 = Ebook"
+          enum: [0, 1, 2]
+          example: 0
+        published:
+          type: string
+          format: date-time
+          example: "2015-10-26T00:00:00Z"
+
+    Book:
+      type: object
+      properties:
+        "@assetType":
+          type: string
+          example: book
+        title:
+          type: string
+          example: "The Go Programming Language"
+        author:
+          type: string
+          example: "Alan Donovan"
+        genres:
+          type: array
+          items:
+            type: string
+          example: ["Technology"]
+        bookType:
+          type: integer
+          example: 0
+        published:
+          type: string
+          format: date-time
+        currentTenant:
+          $ref: "#/components/schemas/Person"
+
+    UpdateTenantRequest:
+      type: object
+      required: [title, author, tenantId]
+      properties:
+        title:
+          type: string
+          example: "The Go Programming Language"
+        author:
+          type: string
+          example: "Alan Donovan"
+        tenantId:
+          type: string
+          description: CPF of the person to assign as tenant
+          example: "123.456.789-09"
+
+    PersonRequest:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          description: Brazilian CPF number
+          example: "123.456.789-09"
+        name:
+          type: string
+          example: "Alice Souza"
+        dateOfBirth:
+          type: string
+          format: date-time
+          example: "1990-01-15T00:00:00Z"
+        height:
+          type: number
+          format: float
+          example: 1.70
+
+    Person:
+      type: object
+      properties:
+        "@assetType":
+          type: string
+          example: person
+        id:
+          type: string
+          example: "123.456.789-09"
+        name:
+          type: string
+          example: "Alice Souza"
+        dateOfBirth:
+          type: string
+          format: date-time
+        height:
+          type: number
+          format: float
+
+    LibraryRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          example: "Central Library"
+
+    Library:
+      type: object
+      properties:
+        "@assetType":
+          type: string
+          example: library
+        name:
+          type: string
+          example: "Central Library"
+        books:
+          type: array
+          items:
+            $ref: "#/components/schemas/Book"
+
+    BookCountResponse:
+      type: object
+      properties:
+        numberOfBooks:
+          type: integer
+          example: 7
+
+# ── Paths ──────────────────────────────────────────────────────────────────────
+paths:
+
+  # ── Auth ───────────────────────────────────────────────────────────────────
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Authenticate and receive a JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: JWT token issued successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Missing username or password
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      tags: [auth]
+      summary: Create a new user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "400":
+          description: Missing fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Username already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /me:
+    get:
+      tags: [auth]
+      summary: Return the profile of the currently authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Books ──────────────────────────────────────────────────────────────────
+  /books:
+    get:
+      tags: [books]
+      summary: List books by author
+      description: |
+        Returns all books written by a given author recorded on the blockchain.  
+        Supports optional genre filtering and pagination.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: author
+          in: query
+          required: true
+          description: Author name to search for
+          schema:
+            type: string
+          example: "Alan Donovan"
+        - name: genre
+          in: query
+          required: false
+          description: Filter by genre (case-sensitive)
+          schema:
+            type: string
+          example: "Technology"
+        - name: page
+          in: query
+          required: false
+          description: Page number (1-based, default 1)
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: limit
+          in: query
+          required: false
+          description: Results per page (default 10, max 100)
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: List of matching books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Book"
+        "400":
+          description: Missing required query parameter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Could not reach the chaincode API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    post:
+      tags: [books]
+      summary: Create a new book on the blockchain
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookRequest"
+      responses:
+        "201":
+          description: Book created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+        "400":
+          description: Validation error or duplicate asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Could not reach the chaincode API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+    delete:
+      tags: [books]
+      summary: Delete a book from the blockchain
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: title
+          in: query
+          required: true
+          description: Title of the book to delete
+          schema:
+            type: string
+          example: "The Go Programming Language"
+        - name: author
+          in: query
+          required: true
+          description: Author of the book to delete
+          schema:
+            type: string
+          example: "Alan Donovan"
+      responses:
+        "200":
+          description: Book deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "book deleted successfully"
+        "400":
+          description: Missing title or author
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Could not reach the chaincode API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /books/tenant:
+    put:
+      tags: [books]
+      summary: Assign a tenant (borrower) to a book
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantRequest"
+      responses:
+        "200":
+          description: Tenant updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+        "400":
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Could not reach the chaincode API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Persons ────────────────────────────────────────────────────────────────
+  /persons:
+    post:
+      tags: [persons]
+      summary: Register a new person on the blockchain
+      description: |
+        Creates a `person` asset identified by a Brazilian CPF number.  
+        The CPF is validated by the chaincode (check-digit algorithm).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PersonRequest"
+      responses:
+        "201":
+          description: Person created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Person"
+        "400":
+          description: Validation error or duplicate asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Could not reach the chaincode API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # ── Libraries ──────────────────────────────────────────────────────────────
+  /libraries:
+    post:
+      tags: [libraries]
+      summary: Create a new library on the blockchain
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LibraryRequest"
+      responses:
+        "201":
+          description: Library created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Library"
+        "400":
+          description: Validation error or duplicate asset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Could not reach the chaincode API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /libraries/{name}/books:
+    get:
+      tags: [libraries]
+      summary: Get the number of books in a library
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          description: Name of the library
+          schema:
+            type: string
+          example: "Central Library"
+      responses:
+        "200":
+          description: Book count returned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookCountResponse"
+        "401":
+          description: Missing or invalid token
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Could not reach the chaincode API
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
