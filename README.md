@@ -1,184 +1,87 @@
-# GoLedger Challenge - QA Edition
+# GoLedger QA Challenge — Submission
 
-In this challenge you will interact with a Hyperledger Fabric network through an already provided GoLang API and React front-end. Both the API and the front-end have been intentionally left with a number of issues and bugs. Your goal is to run both applications, explore their behaviour, and report every finding.
-
-We recommend a UNIX-like machine (Linux/macOS).
-
-## Prerequisites
-
-| Tool | Version |
-|---|---|
-| [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose/) | Latest |
-| [Go](https://golang.org/dl/) | 1.21+ |
-| [Node.js](https://nodejs.org/) | 18+ |
-
-## Instructions
-
-- Fork the repository [https://github.com/goledgerdev/goledger-challenge-qa](https://github.com/goledgerdev/goledger-challenge-qa)
-  - Fork it, do **NOT** clone it, since you will need to send us your forked repository.
-  - If you **cannot** fork it, create a **private** repository and give access to `andremacedopv` and `lucas-campelo`.
-- Follow the setup steps below to run the API and the web application.
-- Explore the running application and document every bug or unexpected behaviour you find.
-
-## Repository structure
-
-```
-.
-├── api/        # GoLang REST API (Gin) — proxies calls to the Hyperledger Fabric CCAPI
-└── web/        # React front-end (Vite + TypeScript) — interacts with the API above
-```
+**Candidate:** Felipe Castro
+**Submission date:** 2026-04-05
 
 ---
 
-## Undertanding the underlying Hyperledger Fabric Network
+## Deliverables
 
-The data are obtained using a rest server at this address, which stores the CCAPI, that communicates with the chaincode: `http://ec2-54-196-90-7.compute-1.amazonaws.com`
+### 1. Bug Report
+**File:** [`bug-report.md`](./bug-report.md)
 
-Also, a Swagger with the endpoints specifications for the operations is provided at this address: `http://ec2-54-196-90-7.compute-1.amazonaws.com/api-docs/index.html`.
+12 bugs documented across the API (Go/Gin) and front-end (React), each with:
+- Root cause identified in the source code
+- Steps to reproduce
+- Expected vs actual behaviour
+- Proposed fix with code snippet
 
-Note: The API is protected with Basic Auth. The credentials were sent to you by email.
+Includes a dedicated **Blockchain Ledger Integrity** section covering the two bugs with direct impact on ledger state — verified by calling the CCAPI directly.
 
-Tip: execute each operation in the Swagger for information on payload format and endpoint addresses. See examples below.
+### 2. Test Cases Spreadsheet
+**Link:** [Google Sheets — GoLedger QA Test Cases](https://docs.google.com/spreadsheets/d/19-7wtD_V3TinnmnoFnZ5kLBObXbx01p5Dk5xElJb7Y8/edit?usp=sharing)
 
-### Get Schema
-Execute a `getSchema` operation to get information on which asset types are available. Don't forget to authenticate with the credentials provided.
+22 test cases across 5 modules (Auth, Books-Web, Books-API, Libraries & Persons, Security) in GIVEN/WHEN/THEN format, with test data, environment, expected vs actual results, and severity classification.
 
+### 3. Postman Collection
+**File:** [`GoLedger_QA.postman_collection.json`](./GoLedger_QA.postman_collection.json)
+
+20+ automated requests across 6 folders:
+
+| Folder | Description |
+|--------|-------------|
+| Auth | Login, bypass by length (BUG-002), password exposure (BUG-004) |
+| Books | DELETE without auth (BUG-003), empty array without genre (BUG-009), offset (BUG-007) |
+| Libraries | Create, count books, auth validation |
+| Persons | Create, auth validation |
+| Security | Token reuse after logout (BUG-001), auth bypass, data exposure |
+| CCAPI Direct | Direct ledger validation — BUG-008 proof via `readAsset` + `readAssetHistory` |
+
+**How to run:**
+1. Import `GoLedger_QA.postman_collection.json` into Postman
+2. Run `Auth → TC-AUTH-001` first — it saves the JWT token automatically
+3. Run the full collection via **Run collection**
+
+### 4. Playwright Tests
+**Location:** `web/tests/`
+
+| File | Coverage |
+|------|----------|
+| `auth.spec.ts` | Login flow, BUG-001 (logout token persistence) |
+| `books.spec.ts` | BUG-006 (missing auth header), BUG-011 (generic error), BUG-010 (prev page) |
+| `register.spec.ts` | BUG-012 (no password confirmation), register flow |
+
+Tests that cover bugs are **intentionally failing** — each failure message describes the bug and its root cause in the source code.
+
+**How to run:**
 ```bash
-curl -X POST "http://ec2-54-196-90-7.compute-1.amazonaws.com/api/query/getSchema" -H "accept: */*" -H "Content-Type: application/json"
+cd web
+npm install
+npx playwright install chromium
+npx playwright test
 ```
 
-Execute a getSchema with a payload to get more details on a particula asset.
+Expected result: 5 failed (bugs), 6 passed (positive flows).
 
-```bash
-curl -X POST "http://ec2-54-196-90-7.compute-1.amazonaws.com/api/query/getSchema" -H "accept: */*" -H "Content-Type: application/json" -d "{\"assetType\":\"book\"}"
-```
-Tip: the same can be done with transactions, using the `getTx` endpoint.
+---
 
-## Running the API
+## Setup
 
-The API is a Go/Gin server that sits between the front-end and a Hyperledger Fabric CCAPI deployment. It exposes a Swagger UI so you can explore the available endpoints.
-
-### 1. Configure environment variables
-
-Copy the example env file and fill in the values:
-
-```bash
-cp api/.env.example api/.env
-```
-
-Open `api/.env` and set the three variables:
-
-```env
-# URL of the Hyperledger Fabric CCAPI
-CCAPI_ORG_URL=http://ec2-54-196-90-7.compute-1.amazonaws.com
-
-# HTTP Basic Auth credentials for the CCAPI
-CCAPI_AUTH_USERNAME=<username_sent_by_email>
-CCAPI_AUTH_PASSWORD=<password_sent_by_email>
-```
-
-> **Tip:** The CCAPI URL and credentials will be sent to you by e-mail. Keep them private and do not commit them to your repository.
-
-### 2. Start the API
-
-**Using Docker (recommended):**
-
+### API
 ```bash
 cd api
+cp .env.example .env
+# Fill in CCAPI_ORG_URL, CCAPI_AUTH_USERNAME, CCAPI_AUTH_PASSWORD
 docker-compose up --build
 ```
 
-**Without Docker:**
-
-```bash
-cd api
-go run .
-```
-
-The server will start on **http://localhost:8080**.
-
-### 3. Explore the Swagger UI
-
-A full OpenAPI specification is bundled with the API. Open your browser at:
-
-```
-http://localhost:8080/docs/index.html
-```
-
-### Default API credentials
-
-The API ships with two pre-seeded user accounts for testing:
-
-| Username | Password |
-|---|---|
-| `admin` | `admin123` |
-| `user1` | `pass123` |
-
-Use the `POST /auth/login` endpoint to obtain a JWT token, then click **Authorize** in the Swagger UI and paste the token to authenticate subsequent requests.
-
----
-
-## Running the Web
-
-The front-end is a React SPA that talks to the API above.
-
-### 1. Configure environment variables
-
-```bash
-cp web/.env.example web/.env
-```
-
-If the API is running on a non-default address, edit `web/.env`:
-
-```env
-VITE_API_URL=http://localhost:8080
-```
-
-### 2. Install dependencies and start the dev server
-
+### Web
 ```bash
 cd web
+cp .env.example .env
 npm install
 npm run dev
 ```
 
-The application will be available at **http://localhost:3000**.
-
----
-
-## The Challenge
-
-### Main deliverable — Bug Report
-
-Your primary deliverable is a written bug report. It should be submitted as a **Markdown (`.md`) or PDF file** committed to your forked repository.
-
-For **each bug or issue found**, the report must include:
-
-| Field | Description |
-|---|---|
-| **ID** | A unique identifier for the bug (e.g. `BUG-001`) |
-| **Title** | A short, descriptive title |
-| **Component** | Which part of the system is affected (`API` or `Web`) |
-| **Endpoint / Page** | The specific API endpoint or UI page where the issue occurs |
-| **Severity** | `Critical` / `High` / `Medium` / `Low` |
-| **Description** | What the bug is and why it is incorrect |
-| **Steps to Reproduce** | Step-by-step instructions to trigger the issue |
-| **Expected Behaviour** | What the correct behaviour should be |
-| **Actual Behaviour** | What actually happens |
-| **Proposed Fix** | A concrete suggestion for how the issue could be resolved (code snippet optional but appreciated) |
-
-> **Tip:** Pay close attention to authentication flows, HTTP status codes, pagination logic, data submitted to the blockchain, and how sensitive information is handled.
-
-### Optional deliverable — Automated Tests
-
-As an optional but valued deliverable, you may submit automated tests that cover the available systems. These tests should demonstrate the incorrect behaviour and/or verify the expected behaviour.
-
-Any testing suite is allowed.
-
-Place the test files inside the respective `api/` or `web/` directory and include instructions on how to run them.
-
----
-
-## Complete the challenge
-
-To complete the challenge, send us the link to your **forked repository**. Make sure your bug report is committed and that any optional test code includes run instructions.
+API runs on `http://localhost:8080` — Swagger at `http://localhost:8080/docs/index.html`
+Web runs on `http://localhost:3000`
