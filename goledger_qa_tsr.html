@@ -1,0 +1,389 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .gl-header {
+    background: #0A1628;
+    border-radius: var(--border-radius-lg);
+    padding: 28px 32px 24px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .gl-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .gl-logo-mark {
+    width: 36px;
+    height: 36px;
+  }
+  .gl-logo-text {
+    font-size: 22px;
+    font-weight: 500;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .gl-logo-text span { color: #00D4AA; }
+  .gl-header-right { text-align: right; }
+  .gl-header-right p { color: rgba(255,255,255,0.55); font-size: 12px; margin-bottom: 2px; }
+  .gl-header-right strong { color: #fff; font-size: 13px; font-weight: 500; }
+  .gl-title-block { margin-bottom: 20px; }
+  .gl-title-block h1 { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .gl-title-block p { font-size: 13px; color: var(--color-text-secondary); margin-top: 4px; }
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0,1fr));
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .kpi {
+    background: var(--color-background-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 14px 16px;
+    border-left: 3px solid transparent;
+  }
+  .kpi.total  { border-left-color: #0A1628; }
+  .kpi.pass   { border-left-color: #00D4AA; }
+  .kpi.fail   { border-left-color: #E24B4A; }
+  .kpi.crit   { border-left-color: #D85A30; }
+  .kpi-label  { font-size: 11px; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi-value  { font-size: 28px; font-weight: 500; color: var(--color-text-primary); line-height: 1; }
+  .kpi-sub    { font-size: 12px; color: var(--color-text-secondary); margin-top: 4px; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    padding: 16px 18px;
+  }
+
+  .chart-wrap { position: relative; width: 100%; height: 180px; }
+
+  .sev-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .sev-label { width: 70px; color: var(--color-text-secondary); flex-shrink: 0; }
+  .sev-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: var(--color-background-secondary);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .sev-bar { height: 100%; border-radius: 4px; }
+  .sev-count { width: 20px; text-align: right; font-weight: 500; color: var(--color-text-primary); }
+
+  .module-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .module-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    padding: 6px 8px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .module-table td { padding: 8px 8px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); }
+  .module-table tr:last-child td { border-bottom: none; }
+  .pill {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .pill-pass { background: #E1F5EE; color: #0F6E56; }
+  .pill-fail { background: #FCEBEB; color: #A32D2D; }
+  .pill-crit { background: #FAECE7; color: #993C1D; }
+  .pill-high { background: #FAEEDA; color: #854F0B; }
+  .pill-med  { background: #E6F1FB; color: #185FA5; }
+  .pill-low  { background: #EAF3DE; color: #3B6D11; }
+
+  .bug-list { font-size: 12px; }
+  .bug-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .bug-item:last-child { border-bottom: none; }
+  .bug-id { font-weight: 500; color: #0A1628; min-width: 64px; font-family: var(--font-mono); font-size: 11px; }
+  .bug-title { color: var(--color-text-primary); flex: 1; line-height: 1.4; }
+  .bug-comp { color: var(--color-text-secondary); font-size: 11px; min-width: 36px; text-align: right; }
+
+  .conclusion {
+    background: #0A1628;
+    border-radius: var(--border-radius-lg);
+    padding: 18px 22px;
+    margin-top: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .conclusion-icon {
+    width: 32px;
+    height: 32px;
+    background: #00D4AA22;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .conclusion-icon svg { width: 16px; height: 16px; }
+  .conclusion p { color: rgba(255,255,255,0.75); font-size: 13px; line-height: 1.6; }
+  .conclusion strong { color: #00D4AA; font-weight: 500; }
+
+  .progress-ring { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 4px; }
+  .donut-wrap { position: relative; width: 120px; height: 120px; }
+  .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+  .donut-center .big { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+  .donut-center .small { font-size: 11px; color: var(--color-text-secondary); }
+
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+</style>
+
+<div style="padding: 4px 0 20px;">
+
+  <div class="gl-header">
+    <div class="gl-logo">
+      <svg class="gl-logo-mark" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="36" height="36" rx="8" fill="#00D4AA" fill-opacity="0.15"/>
+        <polygon points="18,6 30,13 30,23 18,30 6,23 6,13" fill="none" stroke="#00D4AA" stroke-width="1.5"/>
+        <polygon points="18,11 25,15 25,21 18,25 11,21 11,15" fill="#00D4AA" fill-opacity="0.3"/>
+        <circle cx="18" cy="18" r="3" fill="#00D4AA"/>
+      </svg>
+      <div>
+        <div class="gl-logo-text">Go<span>Ledger</span></div>
+        <div style="font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 1px;">Hyperledger Fabric Solutions</div>
+      </div>
+    </div>
+    <div class="gl-header-right">
+      <p>Test Summary Report</p>
+      <strong>QA Challenge — Library Manager</strong>
+      <p style="margin-top:6px;">Felipe Castro &nbsp;·&nbsp; 2026-04-05</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi total">
+      <div class="kpi-label">Test cases</div>
+      <div class="kpi-value">22</div>
+      <div class="kpi-sub">100% executed</div>
+    </div>
+    <div class="kpi pass">
+      <div class="kpi-label">Passed</div>
+      <div class="kpi-value" style="color:#00D4AA;">7</div>
+      <div class="kpi-sub">32% pass rate</div>
+    </div>
+    <div class="kpi fail">
+      <div class="kpi-label">Failed</div>
+      <div class="kpi-value" style="color:#E24B4A;">15</div>
+      <div class="kpi-sub">68% failure rate</div>
+    </div>
+    <div class="kpi crit">
+      <div class="kpi-label">Critical bugs</div>
+      <div class="kpi-value" style="color:#D85A30;">4</div>
+      <div class="kpi-sub">Security impact</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <div class="section-title">Results by module</div>
+      <table class="module-table">
+        <thead>
+          <tr>
+            <th>Module</th>
+            <th>TCs</th>
+            <th>Pass</th>
+            <th>Fail</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Auth</td><td>6</td><td>2</td><td>4</td><td><span class="pill pill-fail">Failing</span></td></tr>
+          <tr><td>Books — Web</td><td>4</td><td>1</td><td>3</td><td><span class="pill pill-fail">Failing</span></td></tr>
+          <tr><td>Books — API</td><td>5</td><td>1</td><td>4</td><td><span class="pill pill-fail">Failing</span></td></tr>
+          <tr><td>Libraries</td><td>2</td><td>2</td><td>0</td><td><span class="pill pill-pass">Passing</span></td></tr>
+          <tr><td>Persons</td><td>1</td><td>1</td><td>0</td><td><span class="pill pill-pass">Passing</span></td></tr>
+          <tr><td>Security</td><td>4</td><td>0</td><td>4</td><td><span class="pill pill-fail">Failing</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="section-title">Bugs by severity</div>
+      <div style="margin-top: 8px;">
+        <div class="sev-row">
+          <span class="sev-label">Critical</span>
+          <div class="sev-bar-bg"><div class="sev-bar" style="width:100%;background:#E24B4A;"></div></div>
+          <span class="sev-count">4</span>
+          <span class="pill pill-crit">33%</span>
+        </div>
+        <div class="sev-row">
+          <span class="sev-label">High</span>
+          <div class="sev-bar-bg"><div class="sev-bar" style="width:83%;background:#D85A30;"></div></div>
+          <span class="sev-count">5</span>
+          <span class="pill pill-high">42%</span>
+        </div>
+        <div class="sev-row">
+          <span class="sev-label">Medium</span>
+          <div class="sev-bar-bg"><div class="sev-bar" style="width:33%;background:#378ADD;"></div></div>
+          <span class="sev-count">2</span>
+          <span class="pill pill-med">17%</span>
+        </div>
+        <div class="sev-row">
+          <span class="sev-label">Low</span>
+          <div class="sev-bar-bg"><div class="sev-bar" style="width:17%;background:#639922;"></div></div>
+          <span class="sev-count">1</span>
+          <span class="pill pill-low">8%</span>
+        </div>
+      </div>
+      <div style="margin-top:16px; padding-top:12px; border-top: 0.5px solid var(--color-border-tertiary);">
+        <div style="font-size:11px; color:var(--color-text-secondary); margin-bottom:6px;">Coverage</div>
+        <div style="display:flex; gap:16px; font-size:12px;">
+          <div><span style="color:var(--color-text-secondary);">API</span> <strong>7 bugs</strong></div>
+          <div><span style="color:var(--color-text-secondary);">Web</span> <strong>5 bugs</strong></div>
+          <div><span style="color:var(--color-text-secondary);">Blockchain</span> <strong>2 ledger risks</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="section-title">Bug inventory</div>
+    <div class="bug-list">
+      <div class="bug-item">
+        <span class="bug-id">BUG-001</span>
+        <span class="bug-title">Logout does not remove JWT token — session persists after reload</span>
+        <span class="pill pill-crit" style="flex-shrink:0;">Critical</span>
+        <span class="bug-comp">Web</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-002</span>
+        <span class="bug-title">Password comparison uses string length — auth bypass with same-length string</span>
+        <span class="pill pill-crit" style="flex-shrink:0;">Critical</span>
+        <span class="bug-comp">API</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-003</span>
+        <span class="bug-title">DELETE /books publicly accessible — blockchain assets deletable without auth</span>
+        <span class="pill pill-crit" style="flex-shrink:0;">Critical</span>
+        <span class="bug-comp">API</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-004</span>
+        <span class="bug-title">GET /me exposes plaintext password in JSON response</span>
+        <span class="pill pill-crit" style="flex-shrink:0;">Critical</span>
+        <span class="bug-comp">API</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-005</span>
+        <span class="bug-title">Passwords stored in plaintext — bcrypt hashing absent</span>
+        <span class="pill pill-high" style="flex-shrink:0;">High</span>
+        <span class="bug-comp">API</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-006</span>
+        <span class="bug-title">createBook omits Authorization header — POST /books always returns 401</span>
+        <span class="pill pill-high" style="flex-shrink:0;">High</span>
+        <span class="bug-comp">Web</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-007</span>
+        <span class="bug-title">Pagination offset uses page×limit — page 1 always empty</span>
+        <span class="pill pill-high" style="flex-shrink:0;">High</span>
+        <span class="bug-comp">API</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-008</span>
+        <span class="bug-title">UpdateBookTenant calls ccapi.Query — tenant never written to ledger</span>
+        <span class="pill pill-high" style="flex-shrink:0;">High</span>
+        <span class="bug-comp">API</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-009</span>
+        <span class="bug-title">GET /books without genre filter always returns empty array</span>
+        <span class="pill pill-high" style="flex-shrink:0;">High</span>
+        <span class="bug-comp">API</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-010</span>
+        <span class="bug-title">Previous page button always navigates to page 1 instead of page − 1</span>
+        <span class="pill pill-med" style="flex-shrink:0;">Medium</span>
+        <span class="bug-comp">Web</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-011</span>
+        <span class="bug-title">createBook error message is generic — real API error discarded</span>
+        <span class="pill pill-med" style="flex-shrink:0;">Medium</span>
+        <span class="bug-comp">Web</span>
+      </div>
+      <div class="bug-item">
+        <span class="bug-id">BUG-012</span>
+        <span class="bug-title">Register form has no password confirmation field</span>
+        <span class="pill pill-low" style="flex-shrink:0;">Low</span>
+        <span class="bug-comp">Web</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:20px;">
+    <div class="section-title">Test automation coverage</div>
+    <div style="display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:12px; margin-top:4px;">
+      <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:12px 14px;">
+        <div style="font-size:11px; color:var(--color-text-secondary); margin-bottom:6px;">Postman collection</div>
+        <div style="font-size:20px; font-weight:500; color:var(--color-text-primary);">20+</div>
+        <div style="font-size:11px; color:var(--color-text-secondary); margin-top:2px;">requests · 5 folders</div>
+      </div>
+      <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:12px 14px;">
+        <div style="font-size:11px; color:var(--color-text-secondary); margin-bottom:6px;">Playwright (E2E)</div>
+        <div style="font-size:20px; font-weight:500; color:var(--color-text-primary);">11</div>
+        <div style="font-size:11px; color:var(--color-text-secondary); margin-top:2px;">specs · 3 files</div>
+      </div>
+      <div style="background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:12px 14px;">
+        <div style="font-size:11px; color:var(--color-text-secondary); margin-bottom:6px;">CCAPI direct</div>
+        <div style="font-size:20px; font-weight:500; color:#00D4AA;">6</div>
+        <div style="font-size:11px; color:var(--color-text-secondary); margin-top:2px;">ledger integrity proofs</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="conclusion-icon">
+      <svg viewBox="0 0 16 16" fill="none">
+        <path d="M8 2L14 5V9C14 12 11 14.5 8 15.5C5 14.5 2 12 2 9V5L8 2Z" stroke="#00D4AA" stroke-width="1.2" fill="none"/>
+        <path d="M5.5 8L7 9.5L10.5 6" stroke="#00D4AA" stroke-width="1.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <p><strong>Conclusion:</strong> The system presents 4 critical security vulnerabilities — authentication bypass by password length, unauthenticated blockchain asset deletion, plaintext password exposure, and persistent sessions after logout. Beyond security, <strong>BUG-008</strong> represents a ledger integrity failure: tenant assignments are silently not written to the Hyperledger Fabric ledger, verified directly via CCAPI <code style="color:#00D4AA;font-size:11px;">readAssetHistory</code>. The Libraries and Persons modules are functional. The system is <strong>not recommended for production</strong> until critical and high-severity bugs are resolved.</p>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+</script>
