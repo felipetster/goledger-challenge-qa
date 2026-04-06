@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Requirements Traceability Matrix — GoLedger QA Challenge</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #F4F6F9; color: #1a1a1a; padding: 32px 24px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  .gl-header { background: #0A1628; border-radius: 12px; padding: 24px 32px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
+  .gl-logo { display: flex; align-items: center; gap: 12px; }
+  .gl-logo-text { font-size: 20px; font-weight: 500; color: #fff; }
+  .gl-logo-text span { color: #00D4AA; }
+  .gl-header-right { text-align: right; }
+  .gl-header-right p { color: rgba(255,255,255,0.5); font-size: 12px; margin-bottom: 2px; }
+  .gl-header-right strong { color: #fff; font-size: 13px; font-weight: 500; }
+
+  .legend { background: #fff; border-radius: 10px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); flex-wrap: wrap; }
+  .legend-title { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-right: 8px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #444; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+  .section-label { font-size: 11px; font-weight: 700; color: #0A1628; text-transform: uppercase; letter-spacing: 0.8px; margin: 20px 0 8px; padding-left: 4px; border-left: 3px solid #00D4AA; padding-left: 10px; }
+
+  .rtm-table { width: 100%; border-collapse: collapse; font-size: 12px; background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); margin-bottom: 8px; }
+  .rtm-table thead tr { background: #0A1628; }
+  .rtm-table th { padding: 10px 12px; text-align: left; color: rgba(255,255,255,0.7); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+  .rtm-table th.center { text-align: center; }
+  .rtm-table td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  .rtm-table tr:last-child td { border-bottom: none; }
+  .rtm-table tr:hover td { background: #FAFBFC; }
+
+  .req-id { font-weight: 700; font-family: 'Courier New', monospace; font-size: 11px; color: #0A1628; white-space: nowrap; }
+  .req-desc { color: #333; line-height: 1.4; }
+  .req-source { color: #888; font-size: 11px; white-space: nowrap; }
+
+  .tc-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .tc-tag { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 600; font-family: 'Courier New', monospace; background: #EEF2FF; color: #3730A3; white-space: nowrap; }
+  .tc-tag.fail { background: #FEECEC; color: #A32D2D; }
+  .tc-tag.pass { background: #E1F5EE; color: #0A6B50; }
+
+  .bug-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .bug-tag { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 10px; font-weight: 700; font-family: 'Courier New', monospace; white-space: nowrap; }
+  .bug-crit { background: #FAECE7; color: #8B2500; }
+  .bug-high { background: #FEF3E2; color: #7A4000; }
+  .bug-med  { background: #E8F2FD; color: #1A5A9E; }
+  .bug-low  { background: #EBF5DE; color: #2E5E0A; }
+
+  .status-pass { color: #00B894; font-weight: 700; font-size: 11px; }
+  .status-fail { color: #E24B4A; font-weight: 700; font-size: 11px; }
+  .status-part { color: #D85A30; font-weight: 700; font-size: 11px; }
+  .center { text-align: center; }
+
+  .auto-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 8px; font-size: 10px; font-weight: 600; }
+  .auto-postman { background: #FFF3E0; color: #E65100; }
+  .auto-playwright { background: #E8F5E9; color: #1B5E20; }
+  .auto-ccapi { background: #E0F7FA; color: #006064; }
+  .auto-none { background: #F5F5F5; color: #9E9E9E; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 20px; }
+  .sum-card { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); text-align: center; }
+  .sum-value { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+  .sum-label { font-size: 11px; color: #888; }
+
+  .footer { text-align: center; font-size: 11px; color: #aaa; margin-top: 28px; }
+  .note { background: #0A162810; border-left: 3px solid #00D4AA; border-radius: 0 8px 8px 0; padding: 10px 14px; font-size: 12px; color: #444; margin-bottom: 16px; line-height: 1.6; }
+  .note strong { color: #0A1628; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="gl-header">
+    <div class="gl-logo">
+      <svg width="36" height="36" viewBox="0 0 36 36" fill="none">
+        <rect width="36" height="36" rx="8" fill="rgba(0,212,170,0.15)"/>
+        <polygon points="18,6 30,13 30,23 18,30 6,23 6,13" fill="none" stroke="#00D4AA" stroke-width="1.5"/>
+        <polygon points="18,11 25,15 25,21 18,25 11,21 11,15" fill="rgba(0,212,170,0.25)"/>
+        <circle cx="18" cy="18" r="3" fill="#00D4AA"/>
+      </svg>
+      <div>
+        <div class="gl-logo-text">Go<span>Ledger</span></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:1px;">Hyperledger Fabric Solutions</div>
+      </div>
+    </div>
+    <div class="gl-header-right">
+      <p>Requirements Traceability Matrix</p>
+      <strong>QA Challenge — Library Manager</strong>
+      <p style="margin-top:6px;">Felipe Castro &nbsp;·&nbsp; 2026-04-05</p>
+    </div>
+  </div>
+
+  <div class="note">
+    <strong>Note on requirements:</strong> This challenge has no formal requirements document. Requirements were derived from three sources: the <strong>API Swagger</strong> (localhost:8080/docs), the <strong>CCAPI Swagger</strong> (ec2 endpoint), and implicit behavioral contracts expected from a REST API with JWT authentication and blockchain integration.
+  </div>
+
+  <div class="legend">
+    <span class="legend-title">Test status</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#E1F5EE;border:1px solid #00B894;"></span> Pass</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#FEECEC;border:1px solid #E24B4A;"></span> Fail</span>
+    <span class="legend-item"><span class="legend-dot" style="background:#FEF3E2;border:1px solid #D85A30;"></span> Partial</span>
+    <span style="margin-left:12px;" class="legend-title">Automation</span>
+    <span class="legend-item"><span class="auto-badge auto-postman">Postman</span></span>
+    <span class="legend-item"><span class="auto-badge auto-playwright">Playwright</span></span>
+    <span class="legend-item"><span class="auto-badge auto-ccapi">CCAPI</span></span>
+  </div>
+
+  <div class="section-label">Authentication</div>
+  <table class="rtm-table">
+    <thead>
+      <tr>
+        <th>REQ ID</th>
+        <th>Requirement</th>
+        <th>Source</th>
+        <th>Test Cases</th>
+        <th>Bugs</th>
+        <th>Automation</th>
+        <th class="center">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-001</span></td>
+        <td class="req-desc">POST /auth/login must authenticate users with valid credentials and return a signed JWT token</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-AUTH-001</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span> <span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-002</span></td>
+        <td class="req-desc">Invalid credentials must return HTTP 401 with an error message</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-AUTH-002</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span> <span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-003</span></td>
+        <td class="req-desc">Password validation must compare the actual value, not the string length</td>
+        <td class="req-source">Security contract</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-AUTH-003</span><span class="tc-tag fail">TC-AUTH-004</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-crit">BUG-002</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-004</span></td>
+        <td class="req-desc">Logout must fully terminate the session and remove the JWT from client storage</td>
+        <td class="req-source">Security contract</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-AUTH-005</span><span class="tc-tag fail">BUG-001 spec</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-crit">BUG-001</span></div></td>
+        <td><span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-005</span></td>
+        <td class="req-desc">GET /me must return user profile without exposing sensitive fields (password)</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-AUTH-005 (Postman)</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-crit">BUG-004</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-006</span></td>
+        <td class="req-desc">Passwords must be stored with a secure hash (bcrypt) — never in plaintext</td>
+        <td class="req-source">Security contract</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-AUTH-006</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-high">BUG-005</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-007</span></td>
+        <td class="req-desc">POST /auth/register must create a new user account and return id, username and role</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-REG-002</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span> <span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-AUTH-008</span></td>
+        <td class="req-desc">Registration form must include a password confirmation field to prevent typos</td>
+        <td class="req-source">UX contract</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">BUG-012 spec</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-low">BUG-012</span></div></td>
+        <td><span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">Books — API</div>
+  <table class="rtm-table">
+    <thead>
+      <tr>
+        <th>REQ ID</th>
+        <th>Requirement</th>
+        <th>Source</th>
+        <th>Test Cases</th>
+        <th>Bugs</th>
+        <th>Automation</th>
+        <th class="center">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="req-id">REQ-BOOK-001</span></td>
+        <td class="req-desc">GET /books must require a valid JWT token (401 without token)</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-BAPI-005</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BOOK-002</span></td>
+        <td class="req-desc">GET /books must return all books by author when no genre filter is applied</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BAPI-002</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-high">BUG-009</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BOOK-003</span></td>
+        <td class="req-desc">Pagination must return the correct page — page 1 offset must be 0</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BAPI-003</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-high">BUG-007</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BOOK-004</span></td>
+        <td class="req-desc">POST /books must require authentication and create a book asset on the blockchain</td>
+        <td class="req-source">API Swagger + CCAPI</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-BAPI-006</span><span class="tc-tag fail">TC-BAPI-005</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span> <span class="auto-badge auto-ccapi">CCAPI</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BOOK-005</span></td>
+        <td class="req-desc">DELETE /books must require a valid JWT token (401 without token)</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BAPI-001</span><span class="tc-tag fail">TC-SEC-003</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-crit">BUG-003</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BOOK-006</span></td>
+        <td class="req-desc">PUT /books/tenant must write the tenant assignment to the blockchain ledger</td>
+        <td class="req-source">API Swagger + CCAPI</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BAPI-004</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-high">BUG-008</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span> <span class="auto-badge auto-ccapi">CCAPI</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">Books — Web UI</div>
+  <table class="rtm-table">
+    <thead>
+      <tr>
+        <th>REQ ID</th>
+        <th>Requirement</th>
+        <th>Source</th>
+        <th>Test Cases</th>
+        <th>Bugs</th>
+        <th>Automation</th>
+        <th class="center">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="req-id">REQ-UI-001</span></td>
+        <td class="req-desc">Create New Book form must successfully create a book on the blockchain</td>
+        <td class="req-source">UI contract</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BWEB-001</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-high">BUG-006</span></div></td>
+        <td><span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-UI-002</span></td>
+        <td class="req-desc">Error messages must reflect the actual API error, not a generic fallback</td>
+        <td class="req-source">UX contract</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BWEB-002</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-med">BUG-011</span></div></td>
+        <td><span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-UI-003</span></td>
+        <td class="req-desc">Pagination Previous button must navigate to the preceding page (current − 1)</td>
+        <td class="req-source">UI contract</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BWEB-003</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-med">BUG-010</span></div></td>
+        <td><span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-UI-004</span></td>
+        <td class="req-desc">Search without author name must show a validation message</td>
+        <td class="req-source">UI contract</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-BWEB-004</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-playwright">Playwright</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">Libraries & Persons</div>
+  <table class="rtm-table">
+    <thead>
+      <tr>
+        <th>REQ ID</th>
+        <th>Requirement</th>
+        <th>Source</th>
+        <th>Test Cases</th>
+        <th>Bugs</th>
+        <th>Automation</th>
+        <th class="center">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="req-id">REQ-LIB-001</span></td>
+        <td class="req-desc">POST /libraries must create a library asset on the blockchain</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-LIB-001</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-LIB-002</span></td>
+        <td class="req-desc">GET /libraries/:name/books must return the number of books in a library</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-LIB-002</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-LIB-003</span></td>
+        <td class="req-desc">All Library and Person endpoints must require a valid JWT token</td>
+        <td class="req-source">API Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-LIB-003</span><span class="tc-tag pass">TC-PER-002</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-PER-001</span></td>
+        <td class="req-desc">POST /persons must create a person asset on the blockchain using a valid CPF as ID</td>
+        <td class="req-source">API Swagger + CCAPI</td>
+        <td><div class="tc-tags"><span class="tc-tag pass">TC-PER-001</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-postman">Postman</span> <span class="auto-badge auto-ccapi">CCAPI</span></td>
+        <td class="center"><span class="status-pass">PASS</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">Blockchain Ledger Integrity</div>
+  <table class="rtm-table">
+    <thead>
+      <tr>
+        <th>REQ ID</th>
+        <th>Requirement</th>
+        <th>Source</th>
+        <th>Test Cases</th>
+        <th>Bugs</th>
+        <th>Automation</th>
+        <th class="center">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><span class="req-id">REQ-BC-001</span></td>
+        <td class="req-desc">State-changing operations (invoke) must use the CCAPI /invoke path — not /query</td>
+        <td class="req-source">CCAPI Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-BAPI-004</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-high">BUG-008</span></div></td>
+        <td><span class="auto-badge auto-ccapi">CCAPI</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BC-002</span></td>
+        <td class="req-desc">Asset state changes must be verifiable via readAssetHistory on the CCAPI</td>
+        <td class="req-source">CCAPI Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">BUG008-STEP6</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-high">BUG-008</span></div></td>
+        <td><span class="auto-badge auto-ccapi">CCAPI</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BC-003</span></td>
+        <td class="req-desc">createAsset must return 409 for duplicate assets — API must handle this gracefully</td>
+        <td class="req-source">CCAPI Swagger</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">CCAPI-LV-001</span></div></td>
+        <td>—</td>
+        <td><span class="auto-badge auto-ccapi">CCAPI</span></td>
+        <td class="center"><span class="status-part">PARTIAL</span></td>
+      </tr>
+      <tr>
+        <td><span class="req-id">REQ-BC-004</span></td>
+        <td class="req-desc">Deleting blockchain assets must require authentication — irreversible operations must be protected</td>
+        <td class="req-source">CCAPI + Security</td>
+        <td><div class="tc-tags"><span class="tc-tag fail">TC-SEC-001</span><span class="tc-tag fail">TC-BAPI-001</span></div></td>
+        <td><div class="bug-tags"><span class="bug-tag bug-crit">BUG-003</span></div></td>
+        <td><span class="auto-badge auto-postman">Postman</span></td>
+        <td class="center"><span class="status-fail">FAIL</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="summary-grid">
+    <div class="sum-card"><div class="sum-value" style="color:#0A1628;">22</div><div class="sum-label">Requirements traced</div></div>
+    <div class="sum-card"><div class="sum-value" style="color:#00B894;">9</div><div class="sum-label">Fully passing</div></div>
+    <div class="sum-card"><div class="sum-value" style="color:#E24B4A;">12</div><div class="sum-label">Failing</div></div>
+    <div class="sum-card"><div class="sum-value" style="color:#D85A30;">1</div><div class="sum-label">Partial</div></div>
+  </div>
+
+  <div class="footer" style="margin-top:24px;">GoLedger QA Challenge · Felipe Castro · 2026-04-05 · github.com/felipetster/goledger-challenge-qa</div>
+</div>
+</body>
+</html>
